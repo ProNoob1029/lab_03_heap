@@ -2,7 +2,8 @@
 #include "Profiler.h"
 #include "bubble.h"
 
-constexpr char buildHeapComparison[] = "1_build_heap_comparison";
+constexpr char buildHeapComparisonAverage[] = "1_build_heap_comparison_average_case";
+constexpr char buildHeapComparisonWorst[] = "1_build_heap_comparison_worst_case";
 
 constexpr char buildHeapAssign[] = "build_heap_assign_comparison";
 constexpr char buildHeapCompare[] = "build_heap_compare_comparison";
@@ -63,14 +64,16 @@ static void minHeapSink(int arr[], const int size, const int n, const int i) {
 }
 
 static void buildMaxHeapBottomUp(int arr[], const int size) {
-    profiler.countOperation(sinkAssign, size, 0);  //without this the operation never gets created and the profiler crashes when creating the groups
+    profiler.countOperation(sinkAssign, size, 0);
+    //without this the operation never gets created and the profiler crashes when creating the groups
     for (int i = size / 2; i > 0; i--) {
         maxHeapSink(arr, size, size, i);
     }
 }
 
 static void buildMinHeapBottomUp(int arr[], const int size) {
-    profiler.countOperation(sinkAssign, size, 0);  //without this the operation never gets created and the profiler crashes when creating the groups
+    profiler.countOperation(sinkAssign, size, 0);
+    //without this the operation never gets created and the profiler crashes when creating the groups
     for (int i = size / 2; i > 0; i--) {
         minHeapSink(arr, size, size, i);
     }
@@ -101,14 +104,16 @@ static void minHeapSwim(int arr[], const int n, const int i) {
 }
 
 static void buildMaxHeapTopDown(int arr[], const int size) {
-    profiler.countOperation(swimAssign, size, 0);  //without this the operation never gets created and the profiler crashes when creating the groups
+    profiler.countOperation(swimAssign, size, 0);
+    //without this the operation never gets created and the profiler crashes when creating the groups
     for (int i = 2; i <= size; i++) {
         maxHeapSwim(arr, size, i);
     }
 }
 
 static void buildMinHeapTopDown(int arr[], const int size) {
-    profiler.countOperation(swimAssign, size, 0);  //without this the operation never gets created and the profiler crashes when creating the groups
+    profiler.countOperation(swimAssign, size, 0);
+    //without this the operation never gets created and the profiler crashes when creating the groups
     for (int i = 2; i <= size; i++) {
         minHeapSwim(arr, size, i);
     }
@@ -130,7 +135,8 @@ static void checkHeapCorrectness() {
     int exampleArr[] = {0, 5, 1, 4, 2, 8, 7, 3};
     int tempArr[n] = {};
 
-    std::cout << "Checking bottom up correctness\nExample array: ";
+    std::cout << "\n=====================================================\n";
+    std::cout << "\nChecking heap algorithms correctness!\n\nExample array: ";
     printArray(exampleArr, n);
 
     std::cout << "\nBuilding max heap bottom up test\noutput: ";
@@ -164,20 +170,22 @@ static void checkHeapCorrectness() {
     }
 }
 
-static void profileBuildHeap() {
-    constexpr int maxSize = 20000;
-    constexpr int numOfTests = 5;
+static void profileBuildHeap(const bool worstCase = false) {
+    constexpr int maxSize = 10000;
+    constexpr int numOfTests = 10;
+    const int sorted = worstCase ? ASCENDING : UNSORTED;
     int arr[maxSize + 1] = {}, tempArr[maxSize + 1] = {};
     std::cout << "profiling bottom up vs top down heap building num of ops\n";
     for (int n = 100; n <= maxSize; n += 100) {
         std::cout << "n: " << n << '\n';
         for (int test = 0; test < numOfTests; test++) {
-            FillRandomArray(arr + 1, n, 10, 50000, false, ASCENDING);
+            FillRandomArray(arr + 1, n, 10, 50000, false, sorted);
             CopyArray(tempArr + 1, arr + 1, n);
             buildMaxHeapBottomUp(arr, n);
             buildMaxHeapTopDown(tempArr, n);
         }
     }
+
     profiler.divideValues(swimAssign, numOfTests);
     profiler.divideValues(swimCompare, numOfTests);
     profiler.divideValues(sinkAssign, numOfTests);
@@ -188,12 +196,24 @@ static void profileBuildHeap() {
 
     profiler.createGroup(buildHeapAssign, sinkAssign, swimAssign);
     profiler.createGroup(buildHeapCompare, sinkCompare, swimCompare);
-    profiler.createGroup(buildHeapComparison, bottomUp, topDown);
+
+    const char *groupName = worstCase ? buildHeapComparisonWorst : buildHeapComparisonAverage;
+
+    profiler.createGroup(groupName, bottomUp, topDown);
+}
+
+static void heapProfiling() {
+    profiler.reset("Build_Heap_Bottom_Up_vs_Top_Down_Average_Case");
+    profileBuildHeap();
+    profiler.reset("Build_Heap_Bottom_Up_vs_Top_Down_Worst_Case");
+    profileBuildHeap(true);
+    profiler.reset();
 }
 
 int main() {
-    profiler.reset("Build_Heap_Bottom_Up_vs_Top_Down");
-    profileBuildHeap();
-    profiler.showReport();
+    heapProfiling();
+    bubbleSortProfiling();
+    checkHeapCorrectness();
+    checkBubbleCorrectness();
     return 0;
 }

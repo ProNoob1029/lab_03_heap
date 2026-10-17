@@ -20,7 +20,7 @@ constexpr char bubbleRecursiveCompare[] = "bubble_recursive_compare";
 
 static auto profiler = Profiler();
 
-static void bubbleSortIterative(int arr[], const int n) {
+static void bubbleSortIterativeProfiled(int arr[], const int n) {
     for (int i = 0; i < n - 1; i++) {
         bool swapped = false;
         for (int j = 0; j < n - i - 1; j++) {
@@ -38,7 +38,7 @@ static void bubbleSortIterative(int arr[], const int n) {
     }
 }
 
-static void bubbleSortRecursive(int arr[], const int size, const int n) {
+static void bubbleSortRecursiveProfiled(int arr[], const int size, const int n) {
     if (size == 1) {
         // Already sorted
         return;
@@ -57,7 +57,7 @@ static void bubbleSortRecursive(int arr[], const int size, const int n) {
         return;
     }
     //Largest element is sorted, going down
-    bubbleSortRecursive(arr, size - 1, n);
+    bubbleSortRecursiveProfiled(arr, size - 1, n);
 }
 
 static void printArray(int arr[], const int n) {
@@ -72,12 +72,13 @@ static void checkBubbleCorrectness() {
     int exampleArr[] = {5, 1, 4, 2, 8};
     int tempArr[n] = {};
 
-    std::cout << "Checking bubble sort correctness\nExample array: ";
+    std::cout << "\n=====================================================\n";
+    std::cout << "\nChecking bubble sort correctness!\n\nExample array: ";
     printArray(exampleArr, n);
 
     std::cout << "\nBubble sort iterative profiled test\noutput: ";
     CopyArray(tempArr, exampleArr, n);
-    bubbleSortIterative(tempArr, n);
+    bubbleSortIterativeProfiled(tempArr, n);
     printArray(tempArr, n);
     if (IsSorted(tempArr, n)) {
         std::cout << "It's sorted!\n";
@@ -88,7 +89,7 @@ static void checkBubbleCorrectness() {
 
     std::cout << "\nBubble sort recursive profiled test\noutput: ";
     CopyArray(tempArr, exampleArr, n);
-    bubbleSortRecursive(tempArr, n, n);
+    bubbleSortRecursiveProfiled(tempArr, n, n);
     printArray(tempArr, n);
     if (IsSorted(tempArr, n)) {
         std::cout << "It's sorted!\n";
@@ -98,33 +99,36 @@ static void checkBubbleCorrectness() {
 }
 
 static void profileBubbleRuntime() {
-    constexpr int maxSize = 10000;
-    constexpr int numOfTests = 10;
+    constexpr int maxSize = 1000;
+    constexpr int numOfTests = 100;
+    constexpr int randomSmoothingRepeats = 5;
     int arr[maxSize], tempArr[numOfTests][maxSize];
     std::cout << "profiling bubble iterative vs recursive runtimes\n";
     for (int n = 100; n <= maxSize; n += 100) {
         std::cout << "n: " << n << '\n';
-        FillRandomArray(arr, n);
+        for (int i = 0; i < randomSmoothingRepeats; i++) {
+            FillRandomArray(arr, n);
 
-        for (auto & test : tempArr) {
-            CopyArray(test, arr, n);
-        }
+            for (auto &test: tempArr) {
+                CopyArray(test, arr, n);
+            }
 
-        profiler.startTimer(bubbleIterativeRuntime, n);
-        for (auto & test : tempArr) {
-            bubbleSortIterative(test, n);
-        }
-        profiler.stopTimer(bubbleIterativeRuntime, n);
+            profiler.startTimer(bubbleIterativeRuntime, n);
+            for (auto &test: tempArr) {
+                bubbleSortIterativeProfiled(test, n);
+            }
+            profiler.stopTimer(bubbleIterativeRuntime, n);
 
-        for (auto & test : tempArr) {
-            CopyArray(test, arr, n);
-        }
+            for (auto &test: tempArr) {
+                CopyArray(test, arr, n);
+            }
 
-        profiler.startTimer(bubbleRecursiveRuntime, n);
-        for (auto & test : tempArr) {
-            bubbleSortRecursive(test, n, n);
+            profiler.startTimer(bubbleRecursiveRuntime, n);
+            for (auto &test: tempArr) {
+                bubbleSortRecursiveProfiled(test, n, n);
+            }
+            profiler.stopTimer(bubbleRecursiveRuntime, n);
         }
-        profiler.stopTimer(bubbleRecursiveRuntime, n);
     }
 
     profiler.createGroup(bubbleRuntime, bubbleIterativeRuntime, bubbleRecursiveRuntime);
@@ -140,8 +144,8 @@ static void profileBubbleNumOfOps() {
         for (int test = 0; test < numOfTests; test++) {
             FillRandomArray(arr, n);
             CopyArray(tempArr, arr, n);
-            bubbleSortIterative(arr, n);
-            bubbleSortRecursive(tempArr, n, n);
+            bubbleSortIterativeProfiled(arr, n);
+            bubbleSortRecursiveProfiled(tempArr, n, n);
         }
     }
 
